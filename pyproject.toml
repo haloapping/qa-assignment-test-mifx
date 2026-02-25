@@ -1,7 +1,7 @@
 [project]
 name = "qa-assignment-test-mifx"
 version = "0.1.0"
-description = "Add your description here"
+description = "Assignment test for QA Engineer position on MIFX"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -9,4 +9,5 @@ dependencies = [
     "httpx>=0.28.1",
     "pytest-playwright>=0.7.2",
     "pytest-xdist>=3.8.0",
+    "python-dotenv>=1.2.1",
 ]
