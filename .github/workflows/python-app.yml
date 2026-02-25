@@ -1,0 +1,55 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: QA Engineer Assignment Test Usaha Kreatif
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.10"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Install Ruff
+        run: uv tool install ruff
+
+      - name: Install Pytest
+        run: uv tool install pytest
+
+      - name: Install Playwright
+        run: uv tool install playwright
+
+      - name: Install dependencies
+        run: |
+          uv sync
+          uv add allure-pytest
+          uv run playwright install
+
+      - name: Lint with Ruff
+        run: uv run ruff check --fix
+
+      - name: Run tests
+        run: uv run pytest -s -vv -n auto --alluredir test-report .
+
+      - name: Upload Allure report
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: test-report
