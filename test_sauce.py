@@ -2,7 +2,7 @@ import os
 import tkinter as tk
 
 import allure
-from playwright.sync_api import Browser, Page, expect
+from playwright.sync_api import Browser, expect
 
 SCREEN_WIDTH = tk.Tk().winfo_screenwidth() if os.getenv("DISPLAY") is not None else 1920
 SCREEN_HEIGHT = (
@@ -30,6 +30,7 @@ def test_user_login(browser: Browser):
     context = browser.new_context(
         viewport={"width": SCREEN_WIDTH, "height": SCREEN_HEIGHT},
         record_video_dir="videos/",
+        record_video_size={"width": SCREEN_WIDTH, "height": SCREEN_HEIGHT},
     )
     page = context.new_page()
 
@@ -87,6 +88,9 @@ def test_user_login(browser: Browser):
 
             page.reload()
 
+    context.close()
+    os.rename(page.video.path(), "videos/tc001_user_login_correct.webm")
+
 
 @allure.id("TC002")
 @allure.severity("HIGH")
@@ -96,7 +100,7 @@ def test_user_login(browser: Browser):
 @allure.description("Check all list menu")
 def test_humbergur_menu(browser: Browser):
     with allure.step("Login"):
-        page = login(browser)
+        context, page = login(browser)
 
     with allure.step("Click humbergur button"):
         page.locator("#react-burger-menu-btn").click()
@@ -134,6 +138,10 @@ def test_humbergur_menu(browser: Browser):
         attachment_type=allure.attachment_type.PNG,
     )
 
+    video_path = page.video.path()
+    context.close()
+    os.rename(video_path, "videos/tc002_menu.webm")
+
 
 @allure.id("TC003")
 @allure.severity("HIGH")
@@ -143,7 +151,7 @@ def test_humbergur_menu(browser: Browser):
 @allure.description("Add some items to cart and reload page")
 def test_reset_app_state_menu(browser: Browser):
     with allure.step("Login"):
-        page = login(browser)
+        context, page = login(browser)
 
     with allure.step("Before reset app state"):
         with allure.step("Add to cart first item"):
@@ -190,6 +198,10 @@ def test_reset_app_state_menu(browser: Browser):
             attachment_type=allure.attachment_type.PNG,
         )
 
+    video_path = page.video.path()
+    context.close()
+    os.rename(video_path, "videos/tc003_reset_app_state.webm")
+
 
 # ERROR! number of badge not equal
 @allure.id("TC004")
@@ -200,7 +212,7 @@ def test_reset_app_state_menu(browser: Browser):
 @allure.description("Add some items to cart and validate number of item")
 def test_add_to_cart_icon(browser: Browser):
     with allure.step("Login"):
-        page = login(browser)
+        context, page = login(browser)
 
     selectors = [
         ["#add-to-cart-sauce-labs-backpack", "#remove-sauce-labs-backpack"],
@@ -257,6 +269,10 @@ def test_add_to_cart_icon(browser: Browser):
                 attachment_type=allure.attachment_type.PNG,
             )
 
+    video_path = page.video.path()
+    context.close()
+    os.rename(video_path, "videos/tc004_add_to_cart.webm")
+
 
 @allure.id("TC005")
 @allure.severity("HIGH")
@@ -266,7 +282,7 @@ def test_add_to_cart_icon(browser: Browser):
 @allure.description("Add some items to cart and checkout")
 def test_checkout(browser: Browser):
     with allure.step("Login"):
-        page = login(browser)
+        context, page = login(browser)
 
     with allure.step("Add item to cart"):
         item_name = (
@@ -315,6 +331,10 @@ def test_checkout(browser: Browser):
             "Thank you for your order!"
         )
 
+    video_path = page.video.path()
+    context.close()
+    os.rename(video_path, "videos/tc005_checkout.webm")
+
 
 @allure.id("TC006")
 @allure.severity("HIGH")
@@ -325,6 +345,8 @@ def test_checkout(browser: Browser):
 def test_login_wrong_password(browser: Browser):
     context = browser.new_context(
         viewport={"width": SCREEN_WIDTH, "height": SCREEN_HEIGHT},
+        record_video_dir="videos/",
+        record_video_size={"width": SCREEN_WIDTH, "height": SCREEN_HEIGHT},
     )
     page = context.new_page()
     page.goto(BASE_URL)
@@ -357,6 +379,10 @@ def test_login_wrong_password(browser: Browser):
         attachment_type=allure.attachment_type.PNG,
     )
 
+    video_path = page.video.path()
+    context.close()
+    os.rename(video_path, "videos/tc006_login_wrong_password.webm")
+
 
 @allure.id("TC007")
 @allure.severity("HIGH")
@@ -367,6 +393,8 @@ def test_login_wrong_password(browser: Browser):
 def test_login_sql_injection(browser: Browser):
     context = browser.new_context(
         viewport={"width": SCREEN_WIDTH, "height": SCREEN_HEIGHT},
+        record_video_dir="videos/",
+        record_video_size={"width": SCREEN_WIDTH, "height": SCREEN_HEIGHT},
     )
     page = context.new_page()
     page.goto(BASE_URL)
@@ -399,6 +427,10 @@ def test_login_sql_injection(browser: Browser):
         attachment_type=allure.attachment_type.PNG,
     )
 
+    video_path = page.video.path()
+    context.close()
+    os.rename(video_path, "videos/tc007_login_sql_injection.webm")
+
 
 @allure.id("TC008")
 @allure.severity("HIGH")
@@ -409,6 +441,8 @@ def test_login_sql_injection(browser: Browser):
 def test_login_xss_attempt(browser: Browser):
     context = browser.new_context(
         viewport={"width": SCREEN_WIDTH, "height": SCREEN_HEIGHT},
+        record_video_dir="videos/",
+        record_video_size={"width": SCREEN_WIDTH, "height": SCREEN_HEIGHT},
     )
     page = context.new_page()
     page.goto(BASE_URL)
@@ -441,16 +475,22 @@ def test_login_xss_attempt(browser: Browser):
         attachment_type=allure.attachment_type.PNG,
     )
 
+    video_path = page.video.path()
+    context.close()
+    os.rename(video_path, "videos/tc008_login_xss_attempt.webm")
+
 
 @allure.id("TC009")
 @allure.severity("HIGH")
 @allure.label("negative case")
 @allure.feature("Login")
 @allure.title("Login with username or password empty")
-@allure.description("Use usernamel or password empty ")
+@allure.description("Use username or password empty ")
 def test_login_empty_field(browser: Browser):
     context = browser.new_context(
         viewport={"width": SCREEN_WIDTH, "height": SCREEN_HEIGHT},
+        record_video_dir="videos/",
+        record_video_size={"width": SCREEN_WIDTH, "height": SCREEN_HEIGHT},
     )
     page = context.new_page()
     page.goto(BASE_URL)
@@ -498,6 +538,10 @@ def test_login_empty_field(browser: Browser):
 
         page.reload()
 
+    video_path = page.video.path()
+    context.close()
+    os.rename(video_path, "videos/tc009_login_user_password_empty.webm")
+
 
 @allure.id("TC010")
 @allure.severity("HIGH")
@@ -507,7 +551,7 @@ def test_login_empty_field(browser: Browser):
 @allure.description("")
 def test_inventory_page(browser: Browser):
     with allure.step("Login"):
-        page = login(browser)
+        context, page = login(browser)
 
     with allure.step("Click humbergur button and logout menu"):
         page.locator("#react-burger-menu-btn").click()
@@ -519,6 +563,10 @@ def test_inventory_page(browser: Browser):
         expect(page.locator("[data-test='error']")).to_have_text(
             "Epic sadface: You can only access '/inventory.html' when you are logged in."
         )
+
+    video_path = page.video.path()
+    context.close()
+    os.rename(video_path, "videos/tc010_access_inventory_page_after_logout.webm")
 
 
 @allure.issue("BUG-123", "The number of cart items is the same for all users.")
@@ -534,6 +582,7 @@ def test_add_cart_other_user(browser: Browser):
     context = browser.new_context(
         viewport={"width": SCREEN_WIDTH, "height": SCREEN_HEIGHT},
         record_video_dir="videos/",
+        record_video_size={"width": SCREEN_WIDTH, "height": SCREEN_HEIGHT},
     )
     page = context.new_page()
     page.goto(BASE_URL)
@@ -584,10 +633,16 @@ def test_add_cart_other_user(browser: Browser):
             expect(page.locator("#remove-sauce-labs-backpack")).not_to_be_visible()
             expect(page.locator("#remove-sauce-labs-bike-light")).not_to_be_visible()
 
+    video_path = page.video.path()
+    context.close()
+    os.rename(video_path, "videos/tc011_cart_items_is_the_same_for_all_users.webm")
 
-def login(browser: Browser) -> Page:
+
+def login(browser: Browser):
     context = browser.new_context(
         viewport={"width": SCREEN_WIDTH, "height": SCREEN_HEIGHT},
+        record_video_dir="videos/",
+        record_video_size={"width": SCREEN_WIDTH, "height": SCREEN_HEIGHT},
     )
     page = context.new_page()
     page.goto(BASE_URL)
@@ -600,4 +655,4 @@ def login(browser: Browser) -> Page:
     with allure.step("Verify login button"):
         page.locator("#login-button").click()
 
-    return page
+    return context, page
