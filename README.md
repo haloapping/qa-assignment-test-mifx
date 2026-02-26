@@ -5,6 +5,8 @@ Test script for API [reqres.in](https://reqres.in/api/users?page=2) and Web [sau
 # Tech Stack
 
 1. Python
+   - python-dotenv: read env file.
+   - httpx: http client.
    - allure-pytest: plugin test documentation.
    - pytest-playwright: plugin provides a robust and flexible way to write end-to-end (E2E) tests for web applications using the Pytest framework and the Playwright library.
    - pytest-xdist: run test on parallel mode.
