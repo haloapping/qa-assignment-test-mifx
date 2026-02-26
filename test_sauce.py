@@ -11,24 +11,6 @@ SCREEN_HEIGHT = (
 BASE_URL = "https://www.saucedemo.com/"
 
 
-def login(browser: Browser) -> Page:
-    context = browser.new_context(
-        viewport={"width": SCREEN_WIDTH, "height": SCREEN_HEIGHT},
-    )
-    page = context.new_page()
-    page.goto(BASE_URL)
-    with allure.step("Verify email field"):
-        page.locator("#user-name").fill("standard_user")
-
-    with allure.step("Verify password field"):
-        page.locator("#password").fill("secret_sauce")
-
-    with allure.step("Verify login button"):
-        page.locator("#login-button").click()
-
-    return page
-
-
 @allure.id("TC001")
 @allure.severity("HIGH")
 @allure.label("positive case")
@@ -47,6 +29,7 @@ def test_user_login(browser: Browser):
 
     context = browser.new_context(
         viewport={"width": SCREEN_WIDTH, "height": SCREEN_HEIGHT},
+        record_video_dir="videos/",
     )
     page = context.new_page()
 
@@ -55,7 +38,7 @@ def test_user_login(browser: Browser):
 
     for username in usernames:
         with allure.step(f"Login with username: {username}"):
-            with allure.step("Verify email field"):
+            with allure.step("Verify username field"):
                 page.locator("#user-name").fill(username)
 
             with allure.step("Verify password field"):
@@ -207,6 +190,7 @@ def test_reset_app_state_menu(browser: Browser):
             attachment_type=allure.attachment_type.PNG,
         )
 
+
 # ERROR! number of badge not equal
 @allure.id("TC004")
 @allure.severity("HIGH")
@@ -249,25 +233,27 @@ def test_add_to_cart_icon(browser: Browser):
                 attachment_type=allure.attachment_type.PNG,
             )
 
-    # remove some item from cart
-    for i, selector in enumerate(selectors, 4):
-        with allure.step(f"Remove item {i - 3} from cart"):
+    # remove all item from cart
+    for i in range(len(selectors) - 1, -1, -1):
+        with allure.step(f"Remove item {i} from cart"):
             before_add_cart_first_item = page.screenshot(full_page=True)
             allure.attach(
                 before_add_cart_first_item,
-                name=f"Remote item {i} from cart",
+                name=f"Remove item {i} from cart",
                 attachment_type=allure.attachment_type.PNG,
             )
 
-            page.locator(selector[1]).click()
-            expect(page.locator("[data-test='shopping-cart-badge']")).to_have_text(
-                str(i)
-            )
+            page.locator(selectors[i][1]).click()
+
+            if i != 0:
+                expect(page.locator("[data-test='shopping-cart-badge']")).to_have_text(
+                    str(i)
+                )
 
             after_remove_first_item = page.screenshot(full_page=True)
             allure.attach(
                 after_remove_first_item,
-                name=f"Remove item {i - 3} from cart",
+                name=f"Remove item {i} from cart",
                 attachment_type=allure.attachment_type.PNG,
             )
 
@@ -276,16 +262,22 @@ def test_add_to_cart_icon(browser: Browser):
 @allure.severity("HIGH")
 @allure.label("positive case")
 @allure.feature("Checkout")
-@allure.title("Checkout all item")
+@allure.title("Checkout item")
 @allure.description("Add some items to cart and checkout")
 def test_checkout(browser: Browser):
     with allure.step("Login"):
         page = login(browser)
 
     with allure.step("Add item to cart"):
-        item_name = page.locator("[data-test='inventory-item-name']").nth(0).inner_text()
-        item_desc = page.locator("[data-test='inventory-item-desc']").nth(0).inner_text()
-        item_price = page.locator("[data-test='inventory-item-price']").nth(0).inner_text()
+        item_name = (
+            page.locator("[data-test='inventory-item-name']").nth(0).inner_text()
+        )
+        item_desc = (
+            page.locator("[data-test='inventory-item-desc']").nth(0).inner_text()
+        )
+        item_price = (
+            page.locator("[data-test='inventory-item-price']").nth(0).inner_text()
+        )
 
         expect(page.locator("#add-to-cart-sauce-labs-backpack")).to_have_text(
             "Add to cart"
@@ -296,9 +288,15 @@ def test_checkout(browser: Browser):
 
     with allure.step("Click Cart Menu"):
         page.locator("[data-test='shopping-cart-link']").click()
-        expect(page.locator("[data-test='inventory-item-name']").nth(0)).to_have_text(item_name)
-        expect(page.locator("[data-test='inventory-item-desc']").nth(0)).to_have_text(item_desc)
-        expect(page.locator("[data-test='inventory-item-price']").nth(0)).to_have_text(item_price)
+        expect(page.locator("[data-test='inventory-item-name']").nth(0)).to_have_text(
+            item_name
+        )
+        expect(page.locator("[data-test='inventory-item-desc']").nth(0)).to_have_text(
+            item_desc
+        )
+        expect(page.locator("[data-test='inventory-item-price']").nth(0)).to_have_text(
+            item_price
+        )
 
     with allure.step("Checkout item"):
         page.locator("#checkout").click()
@@ -313,4 +311,293 @@ def test_checkout(browser: Browser):
         page.locator("#finish").click()
 
     with allure.step("Checkout complete"):
-        expect(page.locator("[data-test='complete-header']")).to_have_text("Thank you for your order!")
+        expect(page.locator("[data-test='complete-header']")).to_have_text(
+            "Thank you for your order!"
+        )
+
+
+@allure.id("TC006")
+@allure.severity("HIGH")
+@allure.label("negative case")
+@allure.feature("Wrong password")
+@allure.title("Login with wrong password")
+@allure.description("Use wrong password when login")
+def test_login_wrong_password(browser: Browser):
+    context = browser.new_context(
+        viewport={"width": SCREEN_WIDTH, "height": SCREEN_HEIGHT},
+    )
+    page = context.new_page()
+    page.goto(BASE_URL)
+
+    with allure.step("Verify username field"):
+        page.locator("#user-name").fill("standard_user")
+
+    with allure.step("Verify password field"):
+        page.locator("#password").fill("wr0ngP4ssword!")
+
+    before_click_login_btn_img = page.screenshot(full_page=True)
+    allure.attach(
+        before_click_login_btn_img,
+        name="Before click login button",
+        attachment_type=allure.attachment_type.PNG,
+    )
+
+    with allure.step("Verify login button"):
+        page.locator("#login-button").click()
+
+    with allure.step("Verify error message"):
+        expect(page.locator("[data-test='error']")).to_have_text(
+            "Epic sadface: Username and password do not match any user in this service"
+        )
+
+    after_click_login_btn_img = page.screenshot(full_page=True)
+    allure.attach(
+        after_click_login_btn_img,
+        name="After click login button",
+        attachment_type=allure.attachment_type.PNG,
+    )
+
+
+@allure.id("TC007")
+@allure.severity("HIGH")
+@allure.label("negative case")
+@allure.feature("SQL Injection")
+@allure.title("Login with password using sql injection")
+@allure.description("Use sql injection when login")
+def test_login_sql_injection(browser: Browser):
+    context = browser.new_context(
+        viewport={"width": SCREEN_WIDTH, "height": SCREEN_HEIGHT},
+    )
+    page = context.new_page()
+    page.goto(BASE_URL)
+
+    with allure.step("Verify username field"):
+        page.locator("#user-name").fill("standard_user")
+
+    with allure.step("Verify password field"):
+        page.locator("#password").fill("' OR 1=1--")
+
+    before_click_login_btn_img = page.screenshot(full_page=True)
+    allure.attach(
+        before_click_login_btn_img,
+        name="Before click login button",
+        attachment_type=allure.attachment_type.PNG,
+    )
+
+    with allure.step("Verify login button"):
+        page.locator("#login-button").click()
+
+    with allure.step("Verify error message"):
+        expect(page.locator("[data-test='error']")).to_have_text(
+            "Epic sadface: Username and password do not match any user in this service"
+        )
+
+    after_click_login_btn_img = page.screenshot(full_page=True)
+    allure.attach(
+        after_click_login_btn_img,
+        name="After click login button",
+        attachment_type=allure.attachment_type.PNG,
+    )
+
+
+@allure.id("TC008")
+@allure.severity("HIGH")
+@allure.label("negative case")
+@allure.feature("Login")
+@allure.title("Login with password using XSS Attempt")
+@allure.description("Use XSS Attempt when login")
+def test_login_xss_attempt(browser: Browser):
+    context = browser.new_context(
+        viewport={"width": SCREEN_WIDTH, "height": SCREEN_HEIGHT},
+    )
+    page = context.new_page()
+    page.goto(BASE_URL)
+
+    with allure.step("Verify username field"):
+        page.locator("#user-name").fill("<script>alert(1)</script>")
+
+    with allure.step("Verify password field"):
+        page.locator("#password").fill("<script>alert(1)</script>")
+
+    before_click_login_btn_img = page.screenshot(full_page=True)
+    allure.attach(
+        before_click_login_btn_img,
+        name="Before click login button",
+        attachment_type=allure.attachment_type.PNG,
+    )
+
+    with allure.step("Verify login button"):
+        page.locator("#login-button").click()
+
+    with allure.step("Verify error message"):
+        expect(page.locator("[data-test='error']")).to_have_text(
+            "Epic sadface: Username and password do not match any user in this service"
+        )
+
+    after_click_login_btn_img = page.screenshot(full_page=True)
+    allure.attach(
+        after_click_login_btn_img,
+        name="After click login button",
+        attachment_type=allure.attachment_type.PNG,
+    )
+
+
+@allure.id("TC009")
+@allure.severity("HIGH")
+@allure.label("negative case")
+@allure.feature("Login")
+@allure.title("Login with username or password empty")
+@allure.description("Use usernamel or password empty ")
+def test_login_empty_field(browser: Browser):
+    context = browser.new_context(
+        viewport={"width": SCREEN_WIDTH, "height": SCREEN_HEIGHT},
+    )
+    page = context.new_page()
+    page.goto(BASE_URL)
+
+    credentials = [
+        {"username": "", "password": ""},
+        {"username": "standard_user", "password": ""},
+        {"username": "", "password": "secret_sauce"},
+    ]
+
+    for i, credential in enumerate(credentials):
+        with allure.step("Verify username field"):
+            page.locator("#user-name").fill(credential["username"])
+
+        with allure.step("Verify password field"):
+            page.locator("#password").fill(credential["password"])
+
+        before_click_login_btn_img = page.screenshot(full_page=True)
+        allure.attach(
+            before_click_login_btn_img,
+            name="Before click login button",
+            attachment_type=allure.attachment_type.PNG,
+        )
+
+        with allure.step("Verify login button"):
+            page.locator("#login-button").click()
+
+        if i == 0 or i == 2:
+            with allure.step("Verify error message"):
+                expect(page.locator("[data-test='error']")).to_have_text(
+                    "Epic sadface: Username is required"
+                )
+        else:
+            with allure.step("Verify error message"):
+                expect(page.locator("[data-test='error']")).to_have_text(
+                    "Epic sadface: Password is required"
+                )
+
+        after_click_login_btn_img = page.screenshot(full_page=True)
+        allure.attach(
+            after_click_login_btn_img,
+            name="After click login button",
+            attachment_type=allure.attachment_type.PNG,
+        )
+
+        page.reload()
+
+
+@allure.id("TC010")
+@allure.severity("HIGH")
+@allure.label("negative case")
+@allure.feature("Inventory Menu")
+@allure.title("Access inventory page after logout")
+@allure.description("")
+def test_inventory_page(browser: Browser):
+    with allure.step("Login"):
+        page = login(browser)
+
+    with allure.step("Click humbergur button and logout menu"):
+        page.locator("#react-burger-menu-btn").click()
+        page.get_by_text("Logout").click()
+
+    page.goto("https://www.saucedemo.com/inventory.html")
+
+    with allure.step("Verify error message"):
+        expect(page.locator("[data-test='error']")).to_have_text(
+            "Epic sadface: You can only access '/inventory.html' when you are logged in."
+        )
+
+
+@allure.issue("BUG-123", "The number of cart items is the same for all users.")
+@allure.id("TC011")
+@allure.severity("HIGH")
+@allure.label("positive case")
+@allure.feature("Inventory Menu")
+@allure.title("Access inventory page after logout")
+@allure.description(
+    "Add item cart using standard user and logout. Login again with another user and check state is reset or not."
+)
+def test_add_cart_other_user(browser: Browser):
+    context = browser.new_context(
+        viewport={"width": SCREEN_WIDTH, "height": SCREEN_HEIGHT},
+        record_video_dir="videos/",
+    )
+    page = context.new_page()
+    page.goto(BASE_URL)
+
+    with allure.step("Login with username: standard_user"):
+        with allure.step("Verify username field"):
+            page.locator("#user-name").fill("standard_user")
+
+        with allure.step("Verify password field"):
+            page.locator("#password").fill("secret_sauce")
+
+        with allure.step("Verify login button"):
+            page.locator("#login-button").click()
+
+        with allure.step("Add 2 items to cart"):
+            page.locator("#add-to-cart-sauce-labs-backpack").click()
+            page.locator("#add-to-cart-sauce-labs-bike-light").click()
+
+        standard_user = page.screenshot(full_page=True)
+        allure.attach(
+            standard_user,
+            name="Homepage standard user",
+            attachment_type=allure.attachment_type.PNG,
+        )
+
+    with allure.step("Logout"):
+        page.locator("#react-burger-menu-btn").click()
+        page.get_by_text("Logout").click()
+
+    with allure.step("Login with username: visual_user"):
+        with allure.step("Verify username field"):
+            page.locator("#user-name").fill("visual_user")
+
+        with allure.step("Verify password field"):
+            page.locator("#password").fill("secret_sauce")
+
+        with allure.step("Verify login button"):
+            page.locator("#login-button").click()
+
+        visual_user = page.screenshot(full_page=True)
+        allure.attach(
+            visual_user,
+            name="Homepage visual user",
+            attachment_type=allure.attachment_type.PNG,
+        )
+
+        with allure.step("Verify state is reset"):
+            expect(page.locator("#remove-sauce-labs-backpack")).not_to_be_visible()
+            expect(page.locator("#remove-sauce-labs-bike-light")).not_to_be_visible()
+
+
+def login(browser: Browser) -> Page:
+    context = browser.new_context(
+        viewport={"width": SCREEN_WIDTH, "height": SCREEN_HEIGHT},
+    )
+    page = context.new_page()
+    page.goto(BASE_URL)
+    with allure.step("Verify username field"):
+        page.locator("#user-name").fill("standard_user")
+
+    with allure.step("Verify password field"):
+        page.locator("#password").fill("secret_sauce")
+
+    with allure.step("Verify login button"):
+        page.locator("#login-button").click()
+
+    return page
