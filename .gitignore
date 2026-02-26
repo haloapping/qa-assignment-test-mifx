@@ -14,3 +14,6 @@ wheels/
 
 # Test report
 test-report/
+
+# Video and screenshot
+videos/
